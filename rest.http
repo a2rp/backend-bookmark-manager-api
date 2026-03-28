@@ -1,0 +1,64 @@
+### Home
+GET http://localhost:1206
+
+
+### Register User
+POST http://localhost:1206/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Ashish",
+  "email": "ashish@example.com",
+  "password": "123456"
+}
+
+
+### Login User
+POST http://localhost:1206/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ashish@example.com",
+  "password": "123456"
+}
+
+
+### Create Bookmark
+POST http://localhost:1206/api/bookmarks
+Content-Type: application/json
+
+{
+  "title": "OpenAI",
+  "url": "https://openai.com",
+  "tags": ["ai", "tools"],
+  "category": "Development",
+  "isFavorite": true
+}
+
+
+### Get My Bookmarks
+GET http://localhost:1206/api/bookmarks
+
+
+### Get Single Bookmark
+GET http://localhost:1206/api/bookmarks/69c7b2833e5ba7f519ad77bd
+
+
+### Update Bookmark
+PUT http://localhost:1206/api/bookmarks/69c7b2833e5ba7f519ad77bd
+Content-Type: application/json
+
+{
+  "title": "OpenAI Platform",
+  "tags": ["ai", "api", "tools"],
+  "category": "Tech",
+  "isFavorite": false
+}
+
+
+### Delete Bookmark
+DELETE http://localhost:1206/api/bookmarks/69c7b2833e5ba7f519ad77bd
+
+
+### Logout User
+POST http://localhost:1206/api/auth/logout
