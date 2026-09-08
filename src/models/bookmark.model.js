@@ -11,6 +11,17 @@ const bookmarkSchema = new mongoose.Schema(
             type: String,
             required: [true, "URL is required"],
             trim: true,
+            validate: {
+                validator: (value) => {
+                    try {
+                        const parsedUrl = new URL(value);
+                        return ["http:", "https:"].includes(parsedUrl.protocol);
+                    } catch {
+                        return false;
+                    }
+                },
+                message: "URL must be a valid HTTP or HTTPS URL",
+            },
         },
         tags: {
             type: [String],
@@ -35,6 +46,8 @@ const bookmarkSchema = new mongoose.Schema(
         timestamps: true,
     },
 );
+
+bookmarkSchema.index({ user: 1, createdAt: -1 });
 
 const Bookmark = mongoose.model("Bookmark", bookmarkSchema);
 

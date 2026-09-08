@@ -7,17 +7,32 @@ const generateToken = (userId) => {
     });
 };
 
+const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 const registerUser = async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
-        if (!name || !email || !password) {
+        if (
+            typeof name !== "string" ||
+            typeof email !== "string" ||
+            typeof password !== "string" ||
+            !name.trim() ||
+            !email.trim() ||
+            password.length < 6
+        ) {
             return res.status(400).json({
-                message: "Name, email, and password are required",
+                message: "Valid name, email, and password of at least 6 characters are required",
             });
         }
 
-        const existingUser = await User.findOne({ email });
+        const normalizedEmail = email.trim().toLowerCase();
+        const existingUser = await User.findOne({ email: normalizedEmail });
 
         if (existingUser) {
             return res.status(400).json({
@@ -26,19 +41,14 @@ const registerUser = async (req, res) => {
         }
 
         const user = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: normalizedEmail,
             password,
         });
 
         const token = generateToken(user._id);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        res.cookie("token", token, cookieOptions);
 
         return res.status(201).json({
             message: "User registered successfully",
@@ -49,9 +59,14 @@ const registerUser = async (req, res) => {
             },
         });
     } catch (error) {
+        if (error.code === 11000) {
+            return res.status(409).json({
+                message: "An account with this email already exists",
+            });
+        }
+
         return res.status(500).json({
             message: "Registration failed",
-            error: error.message,
         });
     }
 };
@@ -60,13 +75,14 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        if (!email || !password) {
+        if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
             return res.status(400).json({
                 message: "Email and password are required",
             });
         }
 
-        const user = await User.findOne({ email });
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
 
         if (!user) {
             return res.status(401).json({
@@ -84,12 +100,7 @@ const loginUser = async (req, res) => {
 
         const token = generateToken(user._id);
 
-        res.cookie("token", token, {
-            httpOnly: true,
-            secure: false,
-            sameSite: "lax",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        res.cookie("token", token, cookieOptions);
 
         return res.status(200).json({
             message: "Login successful",
@@ -102,18 +113,16 @@ const loginUser = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             message: "Login failed",
-            error: error.message,
         });
     }
 };
 
 const logoutUser = async (req, res) => {
     try {
-        res.cookie("token", "", {
+        res.clearCookie("token", {
             httpOnly: true,
-            secure: false,
-            sameSite: "lax",
-            expires: new Date(0),
+            secure: cookieOptions.secure,
+            sameSite: cookieOptions.sameSite,
         });
 
         return res.status(200).json({
@@ -122,7 +131,6 @@ const logoutUser = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             message: "Logout failed",
-            error: error.message,
         });
     }
 };

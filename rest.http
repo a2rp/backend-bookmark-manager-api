@@ -1,3 +1,5 @@
+@bookmarkId = 6a9f6726f9c63a7832da3f11
+
 ### Home
 GET http://localhost:1206
 
@@ -28,9 +30,9 @@ POST http://localhost:1206/api/bookmarks
 Content-Type: application/json
 
 {
-  "title": "OpenAI",
-  "url": "https://openai.com",
-  "tags": ["ai", "tools"],
+  "title": "Ashish Ranjan Portfolio",
+  "url": "https://ashishranjan.in/",
+  "tags": ["portfolio", "web"],
   "category": "Development",
   "isFavorite": true
 }
@@ -41,23 +43,23 @@ GET http://localhost:1206/api/bookmarks
 
 
 ### Get Single Bookmark
-GET http://localhost:1206/api/bookmarks/69c7b2833e5ba7f519ad77bd
+GET http://localhost:1206/api/bookmarks/{{bookmarkId}}
 
 
 ### Update Bookmark
-PUT http://localhost:1206/api/bookmarks/69c7b2833e5ba7f519ad77bd
+PUT http://localhost:1206/api/bookmarks/{{bookmarkId}}
 Content-Type: application/json
 
 {
-  "title": "OpenAI Platform",
-  "tags": ["ai", "api", "tools"],
+  "title": "Ashish Ranjan Website",
+  "tags": ["portfolio", "website"],
   "category": "Tech",
   "isFavorite": false
 }
 
 
 ### Delete Bookmark
-DELETE http://localhost:1206/api/bookmarks/69c7b2833e5ba7f519ad77bd
+DELETE http://localhost:1206/api/bookmarks/{{bookmarkId}}
 
 
 ### Logout User

@@ -1,93 +1,156 @@
-# backend-bookmark-manager-api
+# Backend Bookmark Manager API
 
-Backend API for bookmark manager with links, tags, categories, favorites, and user ownership using JWT and HttpOnly cookies.
+A REST API for managing personal bookmarks with user authentication, ownership checks, tags, categories, favorites, and MongoDB persistence.
 
 ## Features
 
-- Register user
-- Login user
-- Logout user
-- Create bookmark
-- Get all bookmarks (user-specific)
-- Get single bookmark (user-specific)
-- Update bookmark (user-specific)
-- Delete bookmark (user-specific)
-- Tags support
-- Category support
-- Favorite bookmark support
-- Protected routes
-- JWT authentication
-- HttpOnly cookie based auth
-- MongoDB with Mongoose
+- User registration and login
+- JWT authentication stored in an HttpOnly cookie
+- Logout by clearing the authentication cookie
+- Create, list, read, update, and delete bookmarks
+- User-specific bookmark access
+- Tags, categories, and favorite status
+- Request validation for bookmark fields
+- HTTP and HTTPS URL validation
+- Environment-based CORS configuration
 
 ## Tech Stack
 
 - Node.js
 - Express.js
-- MongoDB
-- Mongoose
-- JWT
+- MongoDB and Mongoose
 - bcryptjs
+- jsonwebtoken
 - cookie-parser
+- cors
 
-## Environment Variables
+## Project Structure
 
-Create a .env file:
-
-```bash
-PORT=1206
-MONGO_URI=mongodb://127.0.0.1:27017/backend_bookmark_manager_api
-JWT_SECRET=your_secret_key
-NODE_ENV=development
+```text
+backend-bookmark-manager-api/
+├── src/
+│   ├── config/db.js
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   └── bookmark.controller.js
+│   ├── middlewares/auth.middleware.js
+│   ├── models/
+│   │   ├── user.model.js
+│   │   └── bookmark.model.js
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   └── bookmark.routes.js
+│   └── index.js
+├── rest.http
+├── .env.example
+└── package.json
 ```
 
-## Install
+## Setup
+
+### Requirements
+
+- Node.js
+- npm
+- A running MongoDB instance or MongoDB Atlas database
+
+Install dependencies:
 
 ```bash
 npm install
 ```
 
-## Run
+Copy `.env.example` to `.env` and set the values:
+
+```env
+PORT=1206
+MONGO_URI=mongodb://127.0.0.1:27017/backend_bookmark_manager_api
+JWT_SECRET=replace_with_a_long_random_secret_at_least_32_characters
+CLIENT_ORIGIN=http://localhost:5173
+NODE_ENV=development
+```
+
+Start the API:
 
 ```bash
+# Development
 npm run dev
+
+# Normal start
+npm start
 ```
+
+The API runs at `http://localhost:1206` by default.
 
 ## API Endpoints
 
-### Auth
+### Authentication
 
-- POST /api/auth/register
-- POST /api/auth/login
-- POST /api/auth/logout
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/auth/register` | Create a user and set the auth cookie |
+| `POST` | `/api/auth/login` | Authenticate a user and set the auth cookie |
+| `POST` | `/api/auth/logout` | Clear the auth cookie |
 
 ### Bookmarks
 
-- POST /api/bookmarks
-- GET /api/bookmarks
-- GET /api/bookmarks/:id
-- PUT /api/bookmarks/:id
-- DELETE /api/bookmarks/:id
+All bookmark endpoints require the `token` HttpOnly cookie.
 
-### Bookmark Fields
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/bookmarks` | Create a bookmark |
+| `GET` | `/api/bookmarks` | List the current user's bookmarks |
+| `GET` | `/api/bookmarks/:id` | Get one owned bookmark |
+| `PUT` | `/api/bookmarks/:id` | Update one owned bookmark |
+| `DELETE` | `/api/bookmarks/:id` | Delete one owned bookmark |
 
-- title
-- url
-- tags
-- category
-- isFavorite
+### Bookmark body
 
-## Notes
+```json
+{
+  "title": "Ashish Ranjan Portfolio",
+  "url": "https://ashishranjan.in/",
+  "tags": ["portfolio", "web"],
+  "category": "Development",
+  "isFavorite": true
+}
+```
 
-- Each bookmark belongs to a specific user
-- Users can only access their own bookmarks
-- Authentication via HttpOnly cookies
-- Use withCredentials: true in frontend
+`title` and `url` are required when creating a bookmark. `url` must use HTTP or HTTPS. During an update, all fields are optional, but supplied values must have the correct type.
 
-## Follow Me
+## Authentication behavior
 
-- GitHub: https://github.com/a2rp
-- Portfolio: https://www.ashishranjan.net
-- LinkedIn: https://www.linkedin.com/in/aashishranjan
-- Facebook: https://www.facebook.com/theash.ashish/
-- YouTube: https://www.youtube.com/@ashishranjan-ashz
+After successful registration or login, the API sets a `token` cookie with `HttpOnly` and `SameSite=Lax`. In production, `NODE_ENV=production` enables the `Secure` cookie flag. Browser clients must send credentialed requests, for example with `credentials: "include"` or Axios `withCredentials: true`.
+
+## Manual testing
+
+The [`rest.http`](rest.http) file contains example requests for the root endpoint, authentication, and bookmark CRUD operations. Run registration or login first so the REST client can receive the cookie, then call the bookmark endpoints.
+
+## Current scope
+
+The project has no automated test script, refresh-token flow, password reset, email verification, role-based authorization, pagination, or server-side token revocation. These features can be added if the API grows beyond its current personal bookmark manager scope.
+
+## Author
+
+**Ashish Ranjan**
+Full-Stack Web Developer
+
+## Links
+
+- Portfolio: [ashishranjan.net](https://www.ashishranjan.net)
+- GitHub: [github.com/a2rp](https://github.com/a2rp)
+- CodePen: [codepen.io/ash1198](https://codepen.io/ash1198)
+- LinkedIn: [linkedin.com/in/aashishranjan](https://www.linkedin.com/in/aashishranjan)
+- Facebook: [facebook.com/theash.ashish](https://www.facebook.com/theash.ashish/)
+- YouTube: [Ashish Ranjan](https://www.youtube.com/@ashishranjan-ashz?sub_confirmation=1)
+- Email: [ash.ranjan09@gmail.com](mailto:ash.ranjan09@gmail.com)
+
+## Support
+
+- [Support page](https://a2rp-donation-page.netlify.app/)
+- [Buy Me a Coffee](https://buymeacoffee.com/a2rp)
+- [Patreon](https://www.patreon.com/a2rp)
+
+## License
+
+This project is distributed under the [MIT License](LICENSE).
