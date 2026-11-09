@@ -6,11 +6,13 @@ const bookmarkSchema = new mongoose.Schema(
             type: String,
             required: [true, "Title is required"],
             trim: true,
+            maxlength: 200,
         },
         url: {
             type: String,
             required: [true, "URL is required"],
             trim: true,
+            maxlength: 2048,
             validate: {
                 validator: (value) => {
                     try {
@@ -26,11 +28,16 @@ const bookmarkSchema = new mongoose.Schema(
         tags: {
             type: [String],
             default: [],
+            validate: {
+                validator: (tags) => tags.length <= 30 && tags.every((tag) => tag.length <= 50),
+                message: "A bookmark can have at most 30 tags, each no longer than 50 characters",
+            },
         },
         category: {
             type: String,
             default: "General",
             trim: true,
+            maxlength: 100,
         },
         isFavorite: {
             type: Boolean,

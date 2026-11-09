@@ -1,7 +1,7 @@
 {
     "name": "backend-bookmark-manager-api",
     "version": "1.0.0",
-    "description": "Backend API for bookmark manager with links, tags, categories, favorites, and user ownership",
+    "description": "Express 5 and MongoDB API for user-owned bookmarks with cookie-based JWT authentication",
     "main": "src/index.js",
     "scripts": {
         "dev": "nodemon src/index.js",
@@ -13,17 +13,26 @@
         "mongodb",
         "bookmark-manager",
         "crud",
-        "authentication"
+        "authentication",
+        "jwt",
+        "rest-api",
+        "rate-limiting",
+        "helmet"
     ],
     "author": "Ashish Ranjan",
-    "license": "ISC",
+    "license": "MIT",
     "type": "commonjs",
+    "engines": {
+        "node": ">=20.19.0"
+    },
     "dependencies": {
         "bcryptjs": "^3.0.3",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
         "dotenv": "^17.3.1",
         "express": "^5.2.1",
+        "express-rate-limit": "^8.7.3",
+        "helmet": "^8.3.0",
         "jsonwebtoken": "^9.0.3",
         "mongoose": "^9.3.3"
     },

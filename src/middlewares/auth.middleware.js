@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 const User = require("../models/user.model");
 
 const protect = async (req, res, next) => {
@@ -11,9 +12,24 @@ const protect = async (req, res, next) => {
             });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET, {
+                algorithms: ["HS256"],
+            });
+        } catch {
+            return res.status(401).json({
+                message: "Not authorized, invalid token",
+            });
+        }
 
-        const user = await User.findById(decoded.userId).select("-password");
+        if (!decoded || typeof decoded.userId !== "string" || !mongoose.isValidObjectId(decoded.userId)) {
+            return res.status(401).json({
+                message: "Not authorized, invalid token",
+            });
+        }
+
+        const user = await User.findById(decoded.userId);
 
         if (!user) {
             return res.status(401).json({
@@ -24,9 +40,7 @@ const protect = async (req, res, next) => {
         req.user = user;
         next();
     } catch (error) {
-        return res.status(401).json({
-            message: "Not authorized, invalid token",
-        });
+        return next(error);
     }
 };
 

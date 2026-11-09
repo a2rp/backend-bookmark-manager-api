@@ -4,6 +4,7 @@ const User = require("../models/user.model");
 const generateToken = (userId) => {
     return jwt.sign({ userId }, process.env.JWT_SECRET, {
         expiresIn: "7d",
+        algorithm: "HS256",
     });
 };
 
@@ -12,26 +13,34 @@ const cookieOptions = {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: "/",
 };
+
+const isValidEmail = (email) =>
+    email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+const isValidPassword = (password) =>
+    [...password].length >= 8 && Buffer.byteLength(password, "utf8") <= 72;
 
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password } = req.body || {};
+        const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
         if (
             typeof name !== "string" ||
             typeof email !== "string" ||
             typeof password !== "string" ||
-            !name.trim() ||
-            !email.trim() ||
-            password.length < 6
+            name.trim().length < 1 ||
+            name.trim().length > 100 ||
+            !isValidEmail(normalizedEmail) ||
+            !isValidPassword(password)
         ) {
             return res.status(400).json({
-                message: "Valid name, email, and password of at least 6 characters are required",
+                message: "Provide a name (1-100 characters), valid email, and password (8-72 UTF-8 bytes)",
             });
         }
 
-        const normalizedEmail = email.trim().toLowerCase();
         const existingUser = await User.findOne({ email: normalizedEmail });
 
         if (existingUser) {
@@ -59,6 +68,7 @@ const registerUser = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error("Registration failed:", error);
         if (error.code === 11000) {
             return res.status(409).json({
                 message: "An account with this email already exists",
@@ -73,16 +83,22 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
+        const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
 
-        if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
+        if (
+            typeof email !== "string" ||
+            typeof password !== "string" ||
+            !isValidEmail(normalizedEmail) ||
+            !password ||
+            Buffer.byteLength(password, "utf8") > 72
+        ) {
             return res.status(400).json({
-                message: "Email and password are required",
+                message: "A valid email and password of at most 72 UTF-8 bytes are required",
             });
         }
 
-        const normalizedEmail = email.trim().toLowerCase();
-        const user = await User.findOne({ email: normalizedEmail });
+        const user = await User.findOne({ email: normalizedEmail }).select("+password");
 
         if (!user) {
             return res.status(401).json({
@@ -111,6 +127,7 @@ const loginUser = async (req, res) => {
             },
         });
     } catch (error) {
+        console.error("Login failed:", error);
         return res.status(500).json({
             message: "Login failed",
         });
@@ -123,12 +140,14 @@ const logoutUser = async (req, res) => {
             httpOnly: true,
             secure: cookieOptions.secure,
             sameSite: cookieOptions.sameSite,
+            path: cookieOptions.path,
         });
 
         return res.status(200).json({
             message: "Logout successful",
         });
     } catch (error) {
+        console.error("Logout failed:", error);
         return res.status(500).json({
             message: "Logout failed",
         });

@@ -6,13 +6,15 @@ A REST API for managing personal bookmarks with user authentication, ownership c
 
 - User registration and login
 - JWT authentication stored in an HttpOnly cookie
+- Login and registration rate limits
 - Logout by clearing the authentication cookie
 - Create, list, read, update, and delete bookmarks
 - User-specific bookmark access
 - Tags, categories, and favorite status
 - Request validation for bookmark fields
+- Bookmark field length limits and normalized tags
 - HTTP and HTTPS URL validation
-- Environment-based CORS configuration
+- Environment-based CORS configuration and security headers
 
 ## Tech Stack
 
@@ -23,6 +25,8 @@ A REST API for managing personal bookmarks with user authentication, ownership c
 - jsonwebtoken
 - cookie-parser
 - cors
+- express-rate-limit
+- helmet
 
 ## Project Structure
 
@@ -50,7 +54,7 @@ backend-bookmark-manager-api/
 
 ### Requirements
 
-- Node.js
+- Node.js 20.19 or newer
 - npm
 - A running MongoDB instance or MongoDB Atlas database
 
@@ -65,10 +69,12 @@ Copy `.env.example` to `.env` and set the values:
 ```env
 PORT=1206
 MONGO_URI=mongodb://127.0.0.1:27017/backend_bookmark_manager_api
-JWT_SECRET=replace_with_a_long_random_secret_at_least_32_characters
+JWT_SECRET=change_me_generate_a_random_secret_of_at_least_32_chars
 CLIENT_ORIGIN=http://localhost:5173
 NODE_ENV=development
 ```
+
+Replace the example `JWT_SECRET` with a unique random value before starting the API. In production, set `NODE_ENV=production` and provide one or more comma-separated frontend origins in `CLIENT_ORIGIN`.
 
 Start the API:
 
@@ -116,11 +122,13 @@ All bookmark endpoints require the `token` HttpOnly cookie.
 }
 ```
 
-`title` and `url` are required when creating a bookmark. `url` must use HTTP or HTTPS. During an update, all fields are optional, but supplied values must have the correct type.
+`title` and `url` are required when creating a bookmark. `url` must use HTTP or HTTPS. Titles are limited to 200 characters, URLs to 2,048 characters, categories to 100 characters, and bookmarks to 30 tags of at most 50 characters each. During an update, all fields are optional, but supplied values must have the correct type.
 
 ## Authentication behavior
 
-After successful registration or login, the API sets a `token` cookie with `HttpOnly` and `SameSite=Lax`. In production, `NODE_ENV=production` enables the `Secure` cookie flag. Browser clients must send credentialed requests, for example with `credentials: "include"` or Axios `withCredentials: true`.
+Registration requires a valid email and a password between 8 and 72 UTF-8 bytes. Passwords are hashed with bcrypt. Login and registration are rate-limited per client IP; the in-memory limiter is suitable for a single server process. Multi-instance deployments should configure a shared rate-limit store.
+
+After successful registration or login, the API sets a seven-day `token` cookie with `HttpOnly` and `SameSite=Lax`. In production, `NODE_ENV=production` enables the `Secure` cookie flag. Browser clients must send credentialed requests, for example with `credentials: "include"` or Axios `withCredentials: true`.
 
 ## Manual testing
 
@@ -128,7 +136,7 @@ The [`rest.http`](rest.http) file contains example requests for the root endpoin
 
 ## Current scope
 
-The project has no automated test script, refresh-token flow, password reset, email verification, role-based authorization, pagination, or server-side token revocation. These features can be added if the API grows beyond its current personal bookmark manager scope.
+The API has no refresh-token flow, password reset, email verification, role-based authorization, pagination, or server-side token revocation. Logout clears the browser cookie; an already copied token remains valid until it expires.
 
 ## Author
 

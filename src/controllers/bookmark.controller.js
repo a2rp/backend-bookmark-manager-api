@@ -21,24 +21,27 @@ const getInvalidFieldMessage = ({ title, url, tags, category, isFavorite }, part
         return "URL is required";
     }
 
-    if (title !== undefined && (typeof title !== "string" || !title.trim())) {
-        return "Title must be a non-empty string";
+    if (title !== undefined && (typeof title !== "string" || !title.trim() || title.trim().length > 200)) {
+        return "Title must be a non-empty string of at most 200 characters";
     }
 
-    if (url !== undefined && (typeof url !== "string" || !url.trim())) {
-        return "URL must be a non-empty string";
+    if (url !== undefined && (typeof url !== "string" || !url.trim() || url.trim().length > 2048)) {
+        return "URL must be a non-empty string of at most 2048 characters";
     }
 
     if (url !== undefined && !isValidHttpUrl(url.trim())) {
         return "URL must be a valid HTTP or HTTPS URL";
     }
 
-    if (tags !== undefined && (!Array.isArray(tags) || tags.some((tag) => typeof tag !== "string"))) {
-        return "Tags must be an array of strings";
+    if (
+        tags !== undefined &&
+        (!Array.isArray(tags) || tags.length > 30 || tags.some((tag) => typeof tag !== "string" || tag.trim().length > 50))
+    ) {
+        return "Tags must be an array of at most 30 strings, each no longer than 50 characters";
     }
 
-    if (category !== undefined && typeof category !== "string") {
-        return "Category must be a string";
+    if (category !== undefined && (typeof category !== "string" || category.trim().length > 100)) {
+        return "Category must be a string of at most 100 characters";
     }
 
     if (isFavorite !== undefined && typeof isFavorite !== "boolean") {
@@ -50,7 +53,7 @@ const getInvalidFieldMessage = ({ title, url, tags, category, isFavorite }, part
 
 const createBookmark = async (req, res) => {
     try {
-        const { title, url, tags, category, isFavorite } = req.body;
+        const { title, url, tags, category, isFavorite } = req.body || {};
 
         const invalidFieldMessage = getInvalidFieldMessage(
             { title, url, tags, category, isFavorite },
@@ -64,10 +67,10 @@ const createBookmark = async (req, res) => {
         }
 
         const bookmark = await Bookmark.create({
-            title,
-            url,
-            tags,
-            category,
+            title: title.trim(),
+            url: url.trim(),
+            tags: tags?.map((tag) => tag.trim()).filter(Boolean),
+            category: category?.trim(),
             isFavorite,
             user: req.user._id,
         });
@@ -77,6 +80,7 @@ const createBookmark = async (req, res) => {
             bookmark,
         });
     } catch (error) {
+        console.error("Failed to create bookmark:", error);
         return res.status(500).json({
             message: "Failed to create bookmark",
         });
@@ -94,6 +98,7 @@ const getMyBookmarks = async (req, res) => {
             bookmarks,
         });
     } catch (error) {
+        console.error("Failed to fetch bookmarks:", error);
         return res.status(500).json({
             message: "Failed to fetch bookmarks",
         });
@@ -124,6 +129,7 @@ const getSingleBookmark = async (req, res) => {
             bookmark,
         });
     } catch (error) {
+        console.error("Failed to fetch bookmark:", error);
         return res.status(500).json({
             message: "Failed to fetch bookmark",
         });
@@ -132,7 +138,7 @@ const getSingleBookmark = async (req, res) => {
 
 const updateBookmark = async (req, res) => {
     try {
-        const { title, url, tags, category, isFavorite } = req.body;
+        const { title, url, tags, category, isFavorite } = req.body || {};
 
         if (!isValidBookmarkId(req.params.id)) {
             return res.status(400).json({
@@ -164,9 +170,9 @@ const updateBookmark = async (req, res) => {
 
         bookmark.title = title !== undefined ? title.trim() : bookmark.title;
         bookmark.url = url !== undefined ? url.trim() : bookmark.url;
-        bookmark.tags = tags !== undefined ? tags : bookmark.tags;
+        bookmark.tags = tags !== undefined ? tags.map((tag) => tag.trim()).filter(Boolean) : bookmark.tags;
         bookmark.category =
-            category !== undefined ? category : bookmark.category;
+            category !== undefined ? category.trim() : bookmark.category;
         bookmark.isFavorite =
             isFavorite !== undefined ? isFavorite : bookmark.isFavorite;
 
@@ -177,6 +183,7 @@ const updateBookmark = async (req, res) => {
             bookmark,
         });
     } catch (error) {
+        console.error("Failed to update bookmark:", error);
         return res.status(500).json({
             message: "Failed to update bookmark",
         });
@@ -208,6 +215,7 @@ const deleteBookmark = async (req, res) => {
             message: "Bookmark deleted successfully",
         });
     } catch (error) {
+        console.error("Failed to delete bookmark:", error);
         return res.status(500).json({
             message: "Failed to delete bookmark",
         });

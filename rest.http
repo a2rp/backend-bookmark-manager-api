@@ -11,7 +11,7 @@ Content-Type: application/json
 {
   "name": "Ashish",
   "email": "ashish@example.com",
-  "password": "123456"
+  "password": "ReplaceThisWithYourOwnPassphrase2026!"
 }
 
 
@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
   "email": "ashish@example.com",
-  "password": "123456"
+  "password": "ReplaceThisWithYourOwnPassphrase2026!"
 }
 
 
