@@ -34,6 +34,18 @@ app.use(
     }),
 );
 
+const stateChangingMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+app.use((req, res, next) => {
+    const origin = req.get("Origin");
+
+    if (origin && stateChangingMethods.has(req.method) && !allowedOrigins.includes(origin)) {
+        return res.status(403).json({ message: "Origin not allowed" });
+    }
+
+    return next();
+});
+
 app.get("/", (req, res) => {
     res.json({
         message: "Bookmark Manager API is running",

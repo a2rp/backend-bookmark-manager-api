@@ -14,7 +14,7 @@ A REST API for managing personal bookmarks with user authentication, ownership c
 - Request validation for bookmark fields
 - Bookmark field length limits and normalized tags
 - HTTP and HTTPS URL validation
-- Environment-based CORS configuration and security headers
+- Environment-based CORS configuration, allowed-origin checks for state-changing requests, and security headers
 
 ## Tech Stack
 
@@ -128,7 +128,9 @@ All bookmark endpoints require the `token` HttpOnly cookie.
 
 Registration requires a valid email and a password between 8 and 72 UTF-8 bytes. Passwords are hashed with bcrypt. Login and registration are rate-limited per client IP; the in-memory limiter is suitable for a single server process. Multi-instance deployments should configure a shared rate-limit store.
 
-After successful registration or login, the API sets a seven-day `token` cookie with `HttpOnly` and `SameSite=Lax`. In production, `NODE_ENV=production` enables the `Secure` cookie flag. Browser clients must send credentialed requests, for example with `credentials: "include"` or Axios `withCredentials: true`.
+After successful registration or login, the API sets a seven-day `token` cookie with the `HttpOnly` flag. In development it uses `SameSite=Lax`; in production it uses `SameSite=None; Secure` so a separately hosted frontend can send the cookie over HTTPS. Production deployments must use HTTPS and set one or more exact frontend origins in `CLIENT_ORIGIN`.
+
+Requests with an `Origin` header to state-changing methods (`POST`, `PUT`, `PATCH`, and `DELETE`) are accepted only from the configured frontend origins. Browser clients must send credentialed requests, for example with `credentials: "include"` or Axios `withCredentials: true`.
 
 ## Manual testing
 
